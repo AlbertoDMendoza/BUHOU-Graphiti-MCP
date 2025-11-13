@@ -5,14 +5,22 @@ for better interoperability and semantic consistency.
 
 CCO Alignment:
 - Role (BU Affiliation) → cco:Role (derived from BDO:Role or similar)
-- Facility (HousingFacility, ResidentialFacility, AmenityFacility) → cco:Facility
-- Agreement (LeaseAgreement) → cco:Agreement
-- ServiceRequest (MaintenanceRequest) → cco:ServiceRequest (Information Content Entity)
-- Assignment (RoomAssignment) → cco:Directive (Information Content Entity)
-- Policy (HousingPolicy) → cco:Policy (Directive Information Content Entity)
-- Application (HousingApplication) → cco:Application (Information Content Entity)
-- Event (HousingEvent) → cco:Act
-- FinancialTransaction (Payment) → cco:Act
+- LocationArea → cco:Site (top-level geographic/campus area)
+- Facility (Building) → cco:Facility (individual buildings)
+- FloorOrSuite → cco:Facility (floor or suite subdivision)
+- Room → cco:Facility (individual room within floor/suite)
+- RoomSpace → cco:Facility (bed space within room)
+- AmenityFacility → cco:Facility (shared amenities)
+- Agreement → cco:Agreement
+- ServiceRequest → cco:ServiceRequest (Information Content Entity)
+- Assignment → cco:Directive (Information Content Entity)
+- Policy → cco:Policy (Directive Information Content Entity)
+- Application → cco:Application (Information Content Entity)
+- Event → cco:Act
+- FinancialTransaction → cco:Act
+
+BU Housing Spatial Hierarchy:
+Location Area → Building → Floor/Suite → Room → Room Space
 
 Privacy Note:
 This ontology is designed to be PII-free. No personal names, IDs, or contact information
@@ -70,91 +78,275 @@ class Role(BaseModel):
     )
 
 
-class ResidentialFacility(BaseModel):
-    """A ResidentialFacility represents a specific living space (room, suite, apartment) within BU Housing.
+class LocationArea(BaseModel):
+    """A LocationArea represents a top-level geographic or campus housing area.
 
-    CCO Alignment: cco:Facility - A Site that has been designed to support habitation
-    Domain Context: Individual housing unit where students reside
+    CCO Alignment: cco:Site - A geographic region designated for a particular purpose
+    Domain Context: High-level housing area grouping (Student Village, Bay State Road Apartments, West Campus, etc.)
 
-    Instructions for identifying and extracting housing units:
-    1. Look for room numbers, suite numbers, or apartment identifiers
-    2. Identify unit type (single, double, triple, quad, suite, apartment)
-    3. Extract capacity information (number of beds, occupants)
-    4. Note features (private bathroom, kitchen, balcony, etc.)
-    5. Capture floor level and location within building
-    6. Include accessibility features if mentioned
-    7. Track furniture and furnishings provided
-    8. Note condition or renovation status
-    9. Identify any special designations (quiet floor, substance-free, etc.)
-    """
+    Hierarchy Level: 1 of 5 (LocationArea → Building → Floor/Suite → Room → Room Space)
 
-    unit_number: str = Field(
-        ...,
-        description='Room, suite, or apartment number/identifier',
-    )
-    building_name: str = Field(
-        ...,
-        description='Name of the building where this unit is located',
-    )
-    unit_type: str | None = Field(
-        None,
-        description='Type of unit (single, double, triple, suite, apartment, etc.)',
-    )
-    capacity: int | None = Field(
-        None,
-        description='Maximum number of occupants',
-    )
-    features: str | None = Field(
-        None,
-        description='Notable features or amenities of the unit',
-    )
-    floor_level: str | None = Field(
-        None,
-        description='Floor number or level',
-    )
-
-
-class Facility(BaseModel):
-    """A Facility represents a residence hall or housing building at Boston University.
-
-    CCO Alignment: cco:Facility - A Site that has been designed to support some particular Processual Entity
-    Domain Context: Residence hall, dormitory building, or housing complex
-
-    Instructions for identifying and extracting facilities:
-    1. Look for residence hall names (Warren Towers, West Campus, etc.)
-    2. Identify building location/address on campus
-    3. Extract building type (traditional dorm, apartment-style, brownstone)
-    4. Note total capacity or number of units
-    5. Identify amenities (dining hall, gym, study lounges, laundry)
-    6. Capture special characteristics (honors housing, LLC, themed communities)
-    7. Track accessibility features and accommodations
-    8. Note proximity to campus facilities
-    9. Include year built or renovation information if mentioned
+    Instructions for identifying and extracting location areas:
+    1. Identify named campus housing areas or neighborhoods
+    2. Examples: "Student Village", "Bay State Road Apartments", "West Campus", "South Campus"
+    3. Note geographic boundaries or campus location
+    4. Capture distinguishing characteristics of the area
+    5. Track area-wide amenities or features
+    6. Include proximity to academic buildings or transit
+    7. Note overall capacity or number of buildings in area
+    8. Identify special designations (undergraduate-only, graduate housing, etc.)
     """
 
     name: str = Field(
         ...,
-        description='Name of the residence hall or building',
+        description='Name of the location area (e.g., "Student Village", "Bay State Road Apartments")',
     )
-    location: str | None = Field(
+    campus_location: str | None = Field(
         None,
-        description='Campus location or address',
+        description='Geographic location on campus (East Campus, West Campus, Central, etc.)',
+    )
+    description: str | None = Field(
+        None,
+        description='Description of the area and its characteristics',
+    )
+    area_amenities: str | None = Field(
+        None,
+        description='Shared amenities available across the location area',
+    )
+    special_designation: str | None = Field(
+        None,
+        description='Special area designation (undergraduate, graduate, family housing, etc.)',
+    )
+
+
+class Facility(BaseModel):
+    """A Facility (Building) represents an individual residence hall or housing building.
+
+    CCO Alignment: cco:Facility - A Site that has been designed to support some particular Processual Entity
+    Domain Context: Individual building within a location area (e.g., "10 Buick Street", "Kilachand Hall", "Warren Towers")
+
+    Hierarchy Level: 2 of 5 (LocationArea → Building → Floor/Suite → Room → Room Space)
+
+    Instructions for identifying and extracting buildings:
+    1. Identify specific building names or addresses (e.g., "10 Buick Street", "Kilachand Hall")
+    2. Extract building street address when available
+    3. Note building type (traditional dorm, apartment-style, brownstone, tower)
+    4. Capture total capacity or number of floors
+    5. Identify building-specific amenities (lobby, elevators, dining hall, laundry)
+    6. Track accessibility features (ADA accessible, elevator access)
+    7. Note parent location area (which campus area it belongs to)
+    8. Include year built or major renovation dates if mentioned
+    9. Capture special building characteristics (honors housing, LLC, themed communities)
+    """
+
+    name: str = Field(
+        ...,
+        description='Building name or identifier (e.g., "10 Buick Street", "Kilachand Hall")',
+    )
+    street_address: str | None = Field(
+        None,
+        description='Street address of the building',
+    )
+    location_area: str | None = Field(
+        None,
+        description='Parent location area (e.g., "Student Village", "Bay State Road Apartments")',
     )
     building_type: str | None = Field(
         None,
-        description='Type of housing (traditional dorm, apartment-style, brownstone, etc.)',
+        description='Type of building (traditional dorm, apartment-style, brownstone, tower, etc.)',
     )
     total_capacity: int | None = Field(
         None,
         description='Total number of residents the building can house',
     )
-    amenities: str | None = Field(
+    number_of_floors: int | None = Field(
         None,
-        description='Building amenities and facilities',
+        description='Number of floors in the building',
+    )
+    building_amenities: str | None = Field(
+        None,
+        description='Building-specific amenities (lobby, elevators, dining hall, laundry, etc.)',
+    )
+    accessibility_features: str | None = Field(
+        None,
+        description='Accessibility features (ADA accessible, elevator access, ramps, etc.)',
     )
     special_designation: str | None = Field(
         None,
-        description='Special housing designation (honors, LLC, themed community, etc.)',
+        description='Special building designation (honors housing, LLC, themed community, etc.)',
+    )
+    year_built: str | None = Field(
+        None,
+        description='Year the building was constructed or last renovated',
+    )
+
+
+class FloorOrSuite(BaseModel):
+    """A FloorOrSuite represents a floor level or suite subdivision within a building.
+
+    CCO Alignment: cco:Facility - A subdivision of a building designed to organize living spaces
+    Domain Context: Floor or suite within a building (e.g., "10 Buick-0101", "Floor 3", "Suite A")
+
+    Hierarchy Level: 3 of 5 (LocationArea → Building → Floor/Suite → Room → Room Space)
+
+    Instructions for identifying and extracting floors or suites:
+    1. Identify floor numbers or suite identifiers (e.g., "10 Buick-0101", "Floor 3", "Suite A")
+    2. Note parent building
+    3. Capture floor/suite type (standard floor, suite, apartment cluster)
+    4. Track number of rooms on floor/in suite
+    5. Identify shared spaces (bathrooms, kitchens, common areas)
+    6. Note floor-specific features (study lounge, quiet floor designation)
+    7. Include accessibility information for the floor/suite
+    8. Track capacity at floor/suite level
+    9. Capture any special designations (honors floor, themed floor, substance-free)
+    """
+
+    identifier: str = Field(
+        ...,
+        description='Floor or suite identifier (e.g., "10 Buick-0101", "Floor 3", "Suite A")',
+    )
+    building_name: str = Field(
+        ...,
+        description='Parent building name',
+    )
+    floor_number: int | None = Field(
+        None,
+        description='Floor number within building',
+    )
+    subdivision_type: str | None = Field(
+        None,
+        description='Type of subdivision (floor, suite, apartment cluster, etc.)',
+    )
+    number_of_rooms: int | None = Field(
+        None,
+        description='Number of rooms on this floor/in this suite',
+    )
+    shared_spaces: str | None = Field(
+        None,
+        description='Shared spaces available (bathrooms, kitchen, common room, etc.)',
+    )
+    floor_amenities: str | None = Field(
+        None,
+        description='Floor/suite-specific amenities (study lounge, laundry, etc.)',
+    )
+    special_designation: str | None = Field(
+        None,
+        description='Special floor/suite designation (quiet floor, honors, themed, substance-free, etc.)',
+    )
+
+
+class Room(BaseModel):
+    """A Room represents an individual room within a floor or suite.
+
+    CCO Alignment: cco:Facility - An individual living space within a building
+    Domain Context: Individual room (e.g., "Room 101", "10 Buick-0101-A")
+
+    Hierarchy Level: 4 of 5 (LocationArea → Building → Floor/Suite → Room → Room Space)
+
+    Instructions for identifying and extracting rooms:
+    1. Identify room numbers (e.g., "Room 101", "10 Buick-0101-A")
+    2. Note parent floor/suite and building
+    3. Capture room type (single, double, triple, quad, studio)
+    4. Track total capacity (number of bed spaces)
+    5. Identify room features (private bathroom, kitchenette, balcony)
+    6. Note square footage or room size if available
+    7. Track furniture provided (beds, desks, chairs, closets)
+    8. Include accessibility features (ADA compliant, grab bars, etc.)
+    9. Capture view or window information if relevant
+    """
+
+    room_number: str = Field(
+        ...,
+        description='Room number or identifier (e.g., "Room 101", "10 Buick-0101-A")',
+    )
+    floor_or_suite: str = Field(
+        ...,
+        description='Parent floor or suite identifier',
+    )
+    building_name: str = Field(
+        ...,
+        description='Parent building name',
+    )
+    room_type: str | None = Field(
+        None,
+        description='Type of room (single, double, triple, quad, studio, etc.)',
+    )
+    capacity: int | None = Field(
+        None,
+        description='Total capacity (number of bed spaces in room)',
+    )
+    square_footage: int | None = Field(
+        None,
+        description='Room size in square feet',
+    )
+    room_features: str | None = Field(
+        None,
+        description='Room features (private bathroom, kitchenette, balcony, etc.)',
+    )
+    furniture_provided: str | None = Field(
+        None,
+        description='Furniture included (beds, desks, chairs, closets, etc.)',
+    )
+    accessibility_features: str | None = Field(
+        None,
+        description='Accessibility features (ADA compliant, grab bars, lowered fixtures, etc.)',
+    )
+
+
+class RoomSpace(BaseModel):
+    """A RoomSpace represents an individual bed space within a room.
+
+    CCO Alignment: cco:Facility - An individual occupancy space within a room
+    Domain Context: Bed space or occupancy position (e.g., "101A", "101B", "Bed 1")
+
+    Hierarchy Level: 5 of 5 (LocationArea → Building → Floor/Suite → Room → Room Space)
+
+    Instructions for identifying and extracting room spaces:
+    1. Identify bed space designators (e.g., "101A", "101B", "Bed 1", "Space A")
+    2. Note parent room, floor/suite, and building
+    3. Track space type (lofted bed, standard bed, accessible space)
+    4. Capture space-specific features (window access, desk location, closet access)
+    5. Note furniture configuration for this space
+    6. Include any accessibility accommodations for this specific space
+    7. Track space status (occupied, vacant, reserved)
+    8. Identify special accommodations (medical, accessibility, ESA approved)
+    """
+
+    space_identifier: str = Field(
+        ...,
+        description='Space identifier within room (e.g., "101A", "101B", "Bed 1", "Space A")',
+    )
+    room_number: str = Field(
+        ...,
+        description='Parent room number',
+    )
+    floor_or_suite: str = Field(
+        ...,
+        description='Parent floor or suite identifier',
+    )
+    building_name: str = Field(
+        ...,
+        description='Parent building name',
+    )
+    space_type: str | None = Field(
+        None,
+        description='Type of space (lofted bed, standard bed, accessible space, etc.)',
+    )
+    space_features: str | None = Field(
+        None,
+        description='Space-specific features (window access, desk location, closet access, etc.)',
+    )
+    furniture_items: str | None = Field(
+        None,
+        description='Furniture items for this specific space (bed, desk, chair, dresser, etc.)',
+    )
+    accessibility_accommodations: str | None = Field(
+        None,
+        description='Accessibility or special accommodations for this space',
+    )
+    space_status: str | None = Field(
+        None,
+        description='Status of the space (occupied, vacant, reserved, maintenance, etc.)',
     )
 
 
@@ -537,14 +729,25 @@ class FinancialTransaction(BaseModel):
 
 
 # Registry of all BU Housing entity types (CCO-aligned, PII-free)
+# Organized by hierarchy level and function
 BU_HOUSING_ENTITY_TYPES: dict[str, type[BaseModel]] = {
-    'Role': Role,  # BU Affiliations and functional roles (PII-free)
-    'ResidentialFacility': ResidentialFacility,  # Individual housing units
-    'Facility': Facility,  # Buildings and residence halls
+    # Roles and People (PII-free)
+    'Role': Role,  # BU Affiliations and functional roles
+
+    # Spatial Hierarchy (5 levels)
+    'LocationArea': LocationArea,  # Level 1: Campus housing areas (Student Village, Bay State Road)
+    'Facility': Facility,  # Level 2: Buildings (10 Buick Street, Kilachand Hall)
+    'FloorOrSuite': FloorOrSuite,  # Level 3: Floors or suites (10 Buick-0101, Floor 3)
+    'Room': Room,  # Level 4: Individual rooms (Room 101, 10 Buick-0101-A)
+    'RoomSpace': RoomSpace,  # Level 5: Bed spaces (101A, 101B, Bed 1)
+
+    # Amenities
+    'AmenityFacility': AmenityFacility,  # Shared facilities and amenities
+
+    # Operational Entities
     'Agreement': Agreement,  # Leases and housing contracts
     'ServiceRequest': ServiceRequest,  # Maintenance and service requests
-    'AmenityFacility': AmenityFacility,  # Shared facilities and amenities
-    'Assignment': Assignment,  # Role-to-unit assignments (PII-free)
+    'Assignment': Assignment,  # Role-to-space assignments (PII-free)
     'Policy': Policy,  # Housing policies and regulations
     'Application': Application,  # Housing applications (PII-free)
     'Event': Event,  # Housing events and occurrences
