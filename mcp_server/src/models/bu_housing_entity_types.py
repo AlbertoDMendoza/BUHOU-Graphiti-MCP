@@ -1,47 +1,72 @@
-"""Custom entity type definitions for Boston University Housing Knowledge Graph."""
+"""Custom entity type definitions for Boston University Housing Knowledge Graph.
+
+This module defines entity types aligned with Common Core Ontology (CCO) terminology
+for better interoperability and semantic consistency.
+
+CCO Alignment:
+- Person (Student, Staff) → cco:Person
+- Facility (HousingFacility, ResidentialFacility, AmenityFacility) → cco:Facility
+- Agreement (LeaseAgreement) → cco:Agreement
+- ServiceRequest (MaintenanceRequest) → cco:ServiceRequest (Information Content Entity)
+- Assignment (RoomAssignment) → cco:Directive (Information Content Entity)
+- Policy (HousingPolicy) → cco:Policy (Directive Information Content Entity)
+- Application (HousingApplication) → cco:Application (Information Content Entity)
+- Event (HousingEvent) → cco:Act
+- FinancialTransaction (Payment) → cco:Act
+"""
 
 from pydantic import BaseModel, Field
 
 
-class Student(BaseModel):
-    """A Student represents a current or prospective resident in BU Housing.
+class Person(BaseModel):
+    """A Person represents an individual in the BU Housing context (students, staff, residents).
 
-    Instructions for identifying and extracting students:
-    1. Look for mentions of students, residents, tenants, or occupants
-    2. Extract student names, IDs (BU ID), email addresses when mentioned
-    3. Identify student status (undergraduate, graduate, international, etc.)
-    4. Capture year/class level (freshman, sophomore, junior, senior, grad student)
-    5. Note any special housing needs or accommodations
-    6. Track roommate preferences or assignments
-    7. Include contact information if provided
-    8. Capture academic program or school affiliation when relevant
-    9. Note any housing history or previous assignments
+    CCO Alignment: cco:Person - A Human Being
+    Domain Context: Student or Staff member in BU Housing system
+
+    Instructions for identifying and extracting persons:
+    1. Look for mentions of students, residents, staff, tenants, or occupants
+    2. Extract person names, IDs (BU ID, employee ID), email addresses when mentioned
+    3. Identify role (student, staff, RA, RD, maintenance, etc.)
+    4. For students: Capture status (undergraduate, graduate, international, etc.)
+    5. For students: Note year/class level (freshman, sophomore, junior, senior, grad)
+    6. For staff: Note position, department, responsibilities
+    7. Track special needs, accommodations, or preferences
+    8. Include contact information if provided
+    9. Capture organizational affiliation (academic program, department, etc.)
     """
 
     name: str = Field(
         ...,
-        description='Full name of the student',
+        description='Full name of the person',
     )
-    bu_id: str | None = Field(
+    person_id: str | None = Field(
         None,
-        description='BU student ID number if mentioned',
+        description='Unique identifier (BU ID, employee ID, etc.)',
     )
-    student_status: str | None = Field(
+    role: str | None = Field(
         None,
-        description='Student status (undergraduate, graduate, international, etc.)',
+        description='Role in housing context (student, RA, staff, resident, etc.)',
     )
-    class_year: str | None = Field(
+    status: str | None = Field(
         None,
-        description='Class year or level (freshman, sophomore, junior, senior, grad)',
+        description='Status (undergraduate, graduate, international, full-time staff, etc.)',
+    )
+    affiliation: str | None = Field(
+        None,
+        description='Organizational affiliation (academic program, department, school, etc.)',
     )
     contact_info: str | None = Field(
         None,
-        description='Contact information (email, phone) if mentioned',
+        description='Contact information (email, phone, office location) if mentioned',
     )
 
 
-class HousingUnit(BaseModel):
-    """A HousingUnit represents a specific room, suite, or apartment within BU Housing.
+class ResidentialFacility(BaseModel):
+    """A ResidentialFacility represents a specific living space (room, suite, apartment) within BU Housing.
+
+    CCO Alignment: cco:Facility - A Site that has been designed to support habitation
+    Domain Context: Individual housing unit where students reside
 
     Instructions for identifying and extracting housing units:
     1. Look for room numbers, suite numbers, or apartment identifiers
@@ -81,10 +106,13 @@ class HousingUnit(BaseModel):
     )
 
 
-class Building(BaseModel):
-    """A Building represents a residence hall or housing facility at Boston University.
+class Facility(BaseModel):
+    """A Facility represents a residence hall or housing building at Boston University.
 
-    Instructions for identifying and extracting buildings:
+    CCO Alignment: cco:Facility - A Site that has been designed to support some particular Processual Entity
+    Domain Context: Residence hall, dormitory building, or housing complex
+
+    Instructions for identifying and extracting facilities:
     1. Look for residence hall names (Warren Towers, West Campus, etc.)
     2. Identify building location/address on campus
     3. Extract building type (traditional dorm, apartment-style, brownstone)
@@ -122,10 +150,13 @@ class Building(BaseModel):
     )
 
 
-class LeaseAgreement(BaseModel):
-    """A LeaseAgreement represents a housing contract between BU Housing and a student.
+class Agreement(BaseModel):
+    """An Agreement represents a housing contract or lease between BU Housing and a student.
 
-    Instructions for identifying and extracting lease agreements:
+    CCO Alignment: cco:Agreement - A Directive Information Content Entity that prescribes mutual commitments
+    Domain Context: Housing lease, contract, or housing agreement
+
+    Instructions for identifying and extracting agreements:
     1. Look for contract terms, housing agreements, or lease mentions
     2. Extract start and end dates (academic year, semester, summer)
     3. Identify payment terms and amounts
@@ -167,10 +198,13 @@ class LeaseAgreement(BaseModel):
     )
 
 
-class MaintenanceRequest(BaseModel):
-    """A MaintenanceRequest represents a work order or repair request for housing facilities.
+class ServiceRequest(BaseModel):
+    """A ServiceRequest represents a work order, repair request, or service ticket for housing facilities.
 
-    Instructions for identifying and extracting maintenance requests:
+    CCO Alignment: cco:Information Content Entity - An entity that encodes information about a requested service
+    Domain Context: Maintenance request, repair ticket, work order, or service request
+
+    Instructions for identifying and extracting service requests:
     1. Look for mentions of repairs, fixes, work orders, or maintenance needs
     2. Extract request ID or ticket number if provided
     3. Identify the issue type (plumbing, electrical, HVAC, appliance, etc.)
@@ -212,10 +246,13 @@ class MaintenanceRequest(BaseModel):
     )
 
 
-class Amenity(BaseModel):
-    """An Amenity represents a facility, service, or feature available to BU Housing residents.
+class AmenityFacility(BaseModel):
+    """An AmenityFacility represents a facility, service location, or shared resource available to BU Housing residents.
 
-    Instructions for identifying and extracting amenities:
+    CCO Alignment: cco:Facility - A Site designed to provide amenities or services
+    Domain Context: Gym, laundry room, study lounge, mail room, or other shared facilities
+
+    Instructions for identifying and extracting amenity facilities:
     1. Look for mentions of facilities (gym, laundry, study rooms, lounges)
     2. Identify services (mail room, package pickup, bike storage)
     3. Extract location (building-specific or shared across campus)
@@ -249,47 +286,13 @@ class Amenity(BaseModel):
     )
 
 
-class Staff(BaseModel):
-    """A Staff member represents BU Housing personnel including RAs, coordinators, and maintenance.
+class Assignment(BaseModel):
+    """An Assignment represents the allocation of a person to a specific housing unit.
 
-    Instructions for identifying and extracting staff:
-    1. Look for mentions of Resident Assistants (RAs), Resident Directors (RDs)
-    2. Identify housing coordinators, administrators, or managers
-    3. Extract maintenance staff, custodians, or facility workers
-    4. Note staff role/position and responsibilities
-    5. Identify assigned building or area
-    6. Capture contact information if provided
-    7. Note office hours or availability
-    8. Track any specializations (LGBTQ+ liaison, accessibility coordinator, etc.)
-    9. Include staff hierarchy or reporting structure when mentioned
-    """
+    CCO Alignment: cco:Directive Information Content Entity - An ICE prescribing an allocation or assignment
+    Domain Context: Room assignment, housing placement, or unit allocation
 
-    name: str = Field(
-        ...,
-        description='Name of the staff member',
-    )
-    role: str = Field(
-        ...,
-        description='Staff position (RA, RD, coordinator, maintenance, etc.)',
-    )
-    assigned_building: str | None = Field(
-        None,
-        description='Building or area where staff member works',
-    )
-    contact_info: str | None = Field(
-        None,
-        description='Contact information (email, phone, office number)',
-    )
-    responsibilities: str | None = Field(
-        None,
-        description='Key responsibilities or specializations',
-    )
-
-
-class RoomAssignment(BaseModel):
-    """A RoomAssignment represents the allocation of a student to a specific housing unit.
-
-    Instructions for identifying and extracting room assignments:
+    Instructions for identifying and extracting assignments:
     1. Look for mentions of student placements or room allocations
     2. Extract assignment dates (move-in, move-out dates)
     3. Identify bed space or specific location within unit
@@ -301,9 +304,9 @@ class RoomAssignment(BaseModel):
     9. Track changes or reassignments with reasons
     """
 
-    student_name: str = Field(
+    person_name: str = Field(
         ...,
-        description='Name of the student being assigned',
+        description='Name of the person being assigned',
     )
     unit_number: str = Field(
         ...,
@@ -331,10 +334,13 @@ class RoomAssignment(BaseModel):
     )
 
 
-class HousingPolicy(BaseModel):
-    """A HousingPolicy represents rules, regulations, or guidelines for BU Housing residents.
+class Policy(BaseModel):
+    """A Policy represents rules, regulations, or guidelines for BU Housing residents.
 
-    Instructions for identifying and extracting housing policies:
+    CCO Alignment: cco:Policy - A Directive Information Content Entity that prescribes actions or behaviors
+    Domain Context: Housing rules, regulations, conduct codes, or guidelines
+
+    Instructions for identifying and extracting policies:
     1. Look for mentions of rules, regulations, or guidelines
     2. Identify policy categories (guests, quiet hours, pets, smoking, etc.)
     3. Extract specific requirements or restrictions
@@ -368,10 +374,13 @@ class HousingPolicy(BaseModel):
     )
 
 
-class HousingApplication(BaseModel):
-    """A HousingApplication represents a student's application for BU Housing.
+class Application(BaseModel):
+    """An Application represents a student's application for BU Housing.
 
-    Instructions for identifying and extracting housing applications:
+    CCO Alignment: cco:Information Content Entity - An ICE that encodes an application or request
+    Domain Context: Housing application, lottery submission, or housing request
+
+    Instructions for identifying and extracting applications:
     1. Look for mentions of housing applications or lottery participation
     2. Extract application ID or confirmation number
     3. Identify application type (new student, returning, transfer)
@@ -413,10 +422,13 @@ class HousingApplication(BaseModel):
     )
 
 
-class HousingEvent(BaseModel):
-    """A HousingEvent represents activities, inspections, or occurrences in BU Housing.
+class Event(BaseModel):
+    """An Event represents activities, inspections, or occurrences in BU Housing.
 
-    Instructions for identifying and extracting housing events:
+    CCO Alignment: cco:Act - A Processual Entity performed by an Agent
+    Domain Context: Housing events, inspections, incidents, or scheduled activities
+
+    Instructions for identifying and extracting events:
     1. Look for scheduled events (move-in day, orientation, community events)
     2. Identify inspections (room checks, fire safety, move-out inspections)
     3. Extract incident reports or violations
@@ -454,10 +466,13 @@ class HousingEvent(BaseModel):
     )
 
 
-class Payment(BaseModel):
-    """A Payment represents financial transactions related to BU Housing.
+class FinancialTransaction(BaseModel):
+    """A FinancialTransaction represents financial transactions and payments related to BU Housing.
 
-    Instructions for identifying and extracting payments:
+    CCO Alignment: cco:Act - A Processual Entity involving exchange of money
+    Domain Context: Rent payments, deposits, fees, refunds, or housing-related charges
+
+    Instructions for identifying and extracting financial transactions:
     1. Look for mentions of rent payments, housing fees, or charges
     2. Extract payment amounts and currency
     3. Identify payment type (rent, deposit, damage fee, late fee, etc.)
@@ -499,18 +514,17 @@ class Payment(BaseModel):
     )
 
 
-# Registry of all BU Housing entity types
+# Registry of all BU Housing entity types (CCO-aligned)
 BU_HOUSING_ENTITY_TYPES: dict[str, type[BaseModel]] = {
-    'Student': Student,
-    'HousingUnit': HousingUnit,
-    'Building': Building,
-    'LeaseAgreement': LeaseAgreement,
-    'MaintenanceRequest': MaintenanceRequest,
-    'Amenity': Amenity,
-    'Staff': Staff,
-    'RoomAssignment': RoomAssignment,
-    'HousingPolicy': HousingPolicy,
-    'HousingApplication': HousingApplication,
-    'HousingEvent': HousingEvent,
-    'Payment': Payment,
+    'Person': Person,  # Covers students, staff, residents
+    'ResidentialFacility': ResidentialFacility,  # Individual housing units
+    'Facility': Facility,  # Buildings and residence halls
+    'Agreement': Agreement,  # Leases and housing contracts
+    'ServiceRequest': ServiceRequest,  # Maintenance and service requests
+    'AmenityFacility': AmenityFacility,  # Shared facilities and amenities
+    'Assignment': Assignment,  # Room assignments and allocations
+    'Policy': Policy,  # Housing policies and regulations
+    'Application': Application,  # Housing applications
+    'Event': Event,  # Housing events and occurrences
+    'FinancialTransaction': FinancialTransaction,  # Payments and financial transactions
 }
