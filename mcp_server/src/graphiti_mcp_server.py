@@ -34,6 +34,8 @@ from models.response_types import (
 from services.factories import DatabaseDriverFactory, EmbedderFactory, LLMClientFactory
 from services.queue_service import QueueService
 from utils.formatting import format_fact_result
+from models.bu_housing_entity_types import BU_HOUSING_ENTITY_TYPES
+
 
 # Load .env file from mcp_server directory
 mcp_server_dir = Path(__file__).parent.parent
@@ -190,22 +192,28 @@ class GraphitiService:
             # Get database configuration
             db_config = DatabaseDriverFactory.create_config(self.config.database)
 
-            # Build entity types from configuration
-            custom_types = None
-            if self.config.graphiti.entity_types:
-                custom_types = {}
-                for entity_type in self.config.graphiti.entity_types:
-                    # Create a dynamic Pydantic model for each entity type
-                    # Note: Don't use 'name' as it's a protected Pydantic attribute
-                    entity_model = type(
-                        entity_type.name,
-                        (BaseModel,),
-                        {
-                            '__doc__': entity_type.description,
-                        },
-                    )
-                    custom_types[entity_type.name] = entity_model
+            # Use BU Housing custom entity types instead of config-based types
+            # These are fully-defined Pydantic models with custom attributes
+            self.entity_types = BU_HOUSING_ENTITY_TYPES
+            logger.info(f'Loaded BU Housing entity types: {list(BU_HOUSING_ENTITY_TYPES.keys())}')
 
+# Commented out and using BU Housing Custom Entities instead
+#            # Build entity types from configuration
+#            custom_types = None
+#            if self.config.graphiti.entity_types:
+#                custom_types = {}
+#                for entity_type in self.config.graphiti.entity_types:
+#                    # Create a dynamic Pydantic model for each entity type
+#                    # Note: Don't use 'name' as it's a protected Pydantic attribute
+#                    entity_model = type(
+#                        entity_type.name,
+#                        (BaseModel,),
+#                        {
+#                            '__doc__': entity_type.description,
+#                        },
+#                    )
+#                    custom_types[entity_type.name] = entity_model
+#
             # Store entity types for later use
             self.entity_types = custom_types
 
